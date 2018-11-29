@@ -39,7 +39,7 @@ uint8_t PPU::mem_access(uint16_t addr, uint8_t val, bool rw) {
 						uint16_t naddr = addr;
 						if ((naddr & 0x13) == 0x10) naddr -= 0x10;
 						naddr = (naddr - palette_mem_base_addr) & 0x1f;
-						uint8_t grayscale = read_ppu_ext_register(PPUMASK, R1_G0_S, R1_G0_M);
+						uint8_t grayscale = (ppu_ext_registers[PPUMASK] >> R1_G0_S) & R1_G0_M;
 						if (rw)
 								palette_mem[naddr]  = val;
 						return palette_mem[naddr] & (grayscale ? 0x30: 0xff); 
@@ -57,7 +57,7 @@ uint8_t PPU::access_ppu_ext_register(int reg, uint8_t s, uint8_t m, uint8_t val,
 						case 1: { 
 							ppu_ext_registers[reg] = (ppu_ext_registers[reg] & (~(1<<s))) | (val<<s); 
 							t_addr.nt_addr =  (ppu_ext_registers[reg] >> R0_I_S) & R0_I_M;
-							break; 
+							break;
 						}
 						case 3: { oam_addr = val; break; }
 						case 4: { oam_mem[oam_addr++] = val; break; }
@@ -112,36 +112,39 @@ uint8_t PPU::access_ppu_ext_register(int reg, uint8_t s, uint8_t m, uint8_t val,
 }
 
 void PPU::oam_clear() {
-		for (uint8_t i=0;i<0x20;i++)
-			sec_oam[i] = 0;
+		for (uint8_t i=0;i<0x20;i++) {
+			sec_oam[i] = 255;
+			sprite_chosen[i/4] = false;
+		}
+}
+
+inline int PPU::sprite_height() {
+		return (((ppu_ext_registers[PPUCTRL] >> R0_H_S) & R0_H_M) ? 16: 8);
 }
 
 uint8_t PPU::oam_get(uint8_t *oam, uint8_t idx, OAM_SPRITE p) {
 		switch (p) {
-				case OAM_SPRITE_X: {
-						
-				}
-				case OAM_SPRITE_Y: {
+				case OAM_SPRITE_X: { return oam[idx*4+3]; }
+				case OAM_SPRITE_Y: { return oam[idx*4]; }
+				case OAM_SPRITE_TILES_BANK: { return oam[idx*4+1] & 0x1; }
+				case OAM_SPRITE_TILES_NUM_TOP_SPRITE: { return oam[idx*4+1] & (~0x1);}
+				case OAM_SPRITE_PALETTE: { return oam[idx*4+2] & 0x3; }
+				case OAM_SPRITE_PRIORITY: { return (oam[idx*4+2]>>5) & 0x1; }
+				case OAM_SPRITE_FLIP_H: { return (oam[idx*4+2]>>6) & 0x1; }
+				case OAM_SPRITE_FLIP_V: { return (oam[idx*4+2]>>7) & 0x1; }
+				case OAM_BYTE_1: { return oam[idx*4+1]; }
+				/*
+				case OAM_SPRITE_TILE_LOW:
+				case OAM_SPRITE_TILE_HIGH: {
+						uint16_t addr;
+						if (sprite_height() == 16) 
+								addr = (oam[idx*4+1] & 0x1) * 0x1000 + (oam[idx*4+1] & (~0x1)) * 0x10;
+						else
+								addr = ((ppu_ext_registers[PPUCTRL] >> R0_S_S) & R0_S_M) * 0x1000 + oam[idx*4+1] * 0x10;
+
 
 				}
-				case OAM_SPRITE_TILES_BANK: {
-
-				}
-				case OAM_SPRITE_TILES_NUM_TOP_SPRITE: {
-
-				}
-				case OAM_SPRITE_PALETTE: {
-
-				}
-				case OAM_SPRITE_PRIORITY: {
-
-				}
-				case OAM_SPRITE_FLIP_H: {
-
-				}
-				case OAM_SPRITE_FLIP_V: {
-
-				}
+				*/
 		}
 		cout<<"OAM_GET PROBLEM!!!!!!"<<endl;
 		return 0;

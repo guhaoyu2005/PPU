@@ -42,8 +42,10 @@ private:
 				OAM_SPRITE_PALETTE = 4,
 				OAM_SPRITE_PRIORITY = 5,
 				OAM_SPRITE_FLIP_H = 6,
-				OAM_SPRITE_FLIP_V = 7
-
+				OAM_SPRITE_FLIP_V = 7,
+				OAM_BYTE_1 = 8,
+				OAM_SPRITE_TILE_LOW = 9,
+				OAM_SPRITE_TILE_HIGH = 10
 		};
 
 		const uint8_t COARSE_X_SCROLL = 1;
@@ -61,6 +63,11 @@ private:
 
 		uint8_t pri_oam[0x20];
 		uint8_t sec_oam[0x20];
+		bool sprite_chosen[8];
+		inline int sprite_height();
+
+		int scanline;
+		int dot;
 
 		union VRAM_Addr {
 				struct {
