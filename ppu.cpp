@@ -149,3 +149,27 @@ uint8_t PPU::oam_get(uint8_t *oam, uint8_t idx, OAM_SPRITE p) {
 		cout<<"OAM_GET PROBLEM!!!!!!"<<endl;
 		return 0;
 }
+
+void PPU::scanline_cycle(SCANLINE_TYPE t) {
+		if (t == SCANLINE_TYPE_POST_RENDER && dot == 0) {
+				// trigger GUI to draw output
+		}
+		else if (t == SCANLINE_TYPE_VBLANK && dot == 1) {
+				 ppu_ext_registers[PPUSTATUS] = (ppu_ext_registers[PPUSTATUS] & (~(1<<R2_V_S))) | (1<<R2_V_S); 
+				 if ((ppu_ext_registers[PPUCTRL] >> R0_V_S) & R0_V_M) {
+						 // call cpu interrupt
+				 }
+		}
+		else if (t == SCANLINE_TYPE_PRE_RENDER || t == SCANLINE_TYPE_VISIBLE) {
+				switch (dot) {
+						case 1: {
+								
+								break;
+						}
+						case 257: {
+								// evaluate sprite
+								break;
+						}
+				}
+		}
+}

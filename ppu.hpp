@@ -48,6 +48,13 @@ private:
 				OAM_SPRITE_TILE_HIGH = 10
 		};
 
+		enum SCANLINE_TYPE {
+				SCANLINE_TYPE_PRE_RENDER = 0,
+				SCANLINE_TYPE_VISIBLE = 1,
+				SCANLINE_TYPE_POST_RENDER = 2,
+				SCANLINE_TYPE_VBLANK = 3
+		};
+
 		const uint8_t COARSE_X_SCROLL = 1;
 		const uint8_t COARSE_Y_SCROLL = 32;
 		
@@ -68,6 +75,10 @@ private:
 
 		int scanline;
 		int dot;
+
+		uint8_t attr_shift_a, attr_shift_b;
+		uint16_t bm_shift_a, bm_shift_b;
+		bool attr_latch_a, attr_latch_b;
 
 		union VRAM_Addr {
 				struct {
@@ -97,6 +108,8 @@ private:
 
 		void oam_clear();
 		uint8_t oam_get(uint8_t *oam, uint8_t idx, OAM_SPRITE p);
+
+		void scanline_cycle(SCANLINE_TYPE t);
 
 public:
 		const int PPUCTRL = 0;
