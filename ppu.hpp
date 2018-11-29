@@ -1,4 +1,17 @@
+/*
+
+*/
+
 #include <stdint.h>
+
+#define PPU_MIRRORING_NONE 0
+#define PPU_MIRRORING_HORIZONTAL 1
+#define PPU_MIRRORING_VERTICAL 2
+/*
+Note:
+	1. For OAMDMA, call OAMDATA (write) 256 times to fill up all 256 bytes of oam data.
+		Refer ->   https://wiki.nesdev.com/w/index.php/PPU_OAM  <- for cycle detail.
+*/
 
 class PPU {
 public:
@@ -9,25 +22,84 @@ public:
 		PPU();
 		~PPU();
 		void cycle();
+		void set_mirroring_mode(int m) { mirroring_mode = m; }
+
+public:
+		uint8_t read_ppu_ext_register(int reg, uint8_t s, uint8_t m) {
+				return access_ppu_ext_register(reg, s, m, 0, false);
+		}
+		void write_ppu_ext_register(int reg, uint8_t s, uint8_t m, uint8_t val) {
+				access_ppu_ext_register(reg, s, m, val, true);
+		}
+		uint8_t access_ppu_ext_register(int reg, uint8_t s, uint8_t m, uint8_t val, bool rw);
+
+private:
+		enum OAM_SPRITE {
+				OAM_SPRITE_X = 0,
+				OAM_SPRITE_Y = 1,
+				OAM_SPRITE_TILES_BANK = 2,
+				OAM_SPRITE_TILES_NUM_TOP_SPRITE = 3,
+				OAM_SPRITE_PALETTE = 4,
+				OAM_SPRITE_PRIORITY = 5,
+				OAM_SPRITE_FLIP_H = 6,
+				OAM_SPRITE_FLIP_V = 7
+
+		};
+
+		const uint8_t COARSE_X_SCROLL = 1;
+		const uint8_t COARSE_Y_SCROLL = 32;
 		
 private:
-		const uint16_t ppu_mem_base_addr = 0x2000;
-		uint8_t ppu_mem[0x800];
+
+		const uint16_t nametable_mem_base_addr = 0x2000;
 		const uint16_t palette_mem_base_addr = 0x3f00;
+
+		uint8_t nametable_mem[0x800];
 		uint8_t palette_mem[0x20];
 		uint8_t oam_mem[0x100];
 		uint8_t oam_addr;
 
-public:
+		uint8_t pri_oam[0x20];
+		uint8_t sec_oam[0x20];
 
-		const uint8_t PPUCTRL = 0;
-		const uint8_t PPUMASK = 1;
-		const uint8_t PPUSTATUS = 2;
-		const uint8_t OAMADDR = 3;
-		const uint8_t OAMDATA = 4;
-		const uint8_t PPUSCROLL = 5;
-		const uint8_t PPUADDR = 6;
-		const uint8_t PPUDATA = 7;
+		union VRAM_Addr {
+				struct {
+						unsigned coarse_x: 5;
+						unsigned coarse_y: 5;
+						unsigned nt_addr: 2;
+						unsigned fine_y: 3;
+				};
+				struct {
+						unsigned low_addr: 8;
+						unsigned high_addr: 7;
+				};
+				unsigned addr: 14;
+				unsigned reg: 15;	
+		} v_addr, t_addr;
+
+		uint8_t fine_x;
+		bool w;
+		uint8_t internal_read_buffer;
+
+		int mirroring_mode;
+
+private:
+		uint8_t mem_read(uint16_t addr) { return mem_access(addr, 0, false); }
+		void mem_write(uint16_t addr, uint8_t val) { mem_access(addr, val, true); }
+		uint8_t mem_access(uint16_t addr, uint8_t val, bool rw);
+
+		void oam_clear();
+		uint8_t oam_get(uint8_t *oam, uint8_t idx, OAM_SPRITE p);
+
+public:
+		const int PPUCTRL = 0;
+		const int PPUMASK = 1;
+		const int PPUSTATUS = 2;
+		const int OAMADDR = 3;
+		const int OAMDATA = 4;
+		const int PPUSCROLL = 5;
+		const int PPUADDR = 6;
+		const int PPUDATA = 7;
 
 		const uint8_t R0_V_S  = 7; const uint8_t R0_V_M  = 0x1;
 		const uint8_t R0_P_S  = 6; const uint8_t R0_P_M  = 0x1;
@@ -55,15 +127,6 @@ public:
 		const uint8_t R5_S = 0; const uint8_t R5_M = 0xff;
 		const uint8_t R6_S = 0; const uint8_t R6_M = 0xff;
 		const uint8_t R7_S = 0; const uint8_t R7_M = 0xff;
-
-public:
-		uint8_t read_ppu_register(int reg, uint8_t s, uint8_t m) {
-				return access_ppu_register(reg, s, m, 0, false);
-		}
-		void write_ppu_register(int reg, uint8_t s, uint8_t m, uint8_t val) {
-				access_ppu_register(reg, s, m, val, true);
-		}
-		uint8_t access_ppu_register(int reg, uint8_t s, uint8_t m, uint8_t val, bool rw);
 
 private:
 		uint32_t NES_COLOR_PALETTES_STD[64] = 
