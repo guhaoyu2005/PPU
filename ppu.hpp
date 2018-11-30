@@ -23,15 +23,16 @@ public:
 		~PPU();
 		void cycle();
 		void set_mirroring_mode(int m) { mirroring_mode = m; }
+		void reset();
 
 public:
-		uint8_t read_ppu_ext_register(int reg, uint8_t s, uint8_t m) {
-				return access_ppu_ext_register(reg, s, m, 0, false);
+		uint8_t read_ppu_ext_register(int reg) {
+				return access_ppu_ext_register(reg, 0, false);
 		}
-		void write_ppu_ext_register(int reg, uint8_t s, uint8_t m, uint8_t val) {
-				access_ppu_ext_register(reg, s, m, val, true);
+		void write_ppu_ext_register(int reg, uint8_t val) {
+				access_ppu_ext_register(reg, val, true);
 		}
-		uint8_t access_ppu_ext_register(int reg, uint8_t s, uint8_t m, uint8_t val, bool rw);
+		uint8_t access_ppu_ext_register(int reg, uint8_t val, bool rw);
 
 private:
 		enum OAM_SPRITE {
@@ -71,14 +72,22 @@ private:
 		uint8_t pri_oam[0x20];
 		uint8_t sec_oam[0x20];
 		bool sprite_chosen[8];
+		int sprite_id[8];
+
+		bool sec_sprite_chosen[8];
+		int sec_sprite_id[8];
 		inline int sprite_height();
+		inline bool show_sprite_or_bkg();
+		inline void scroll_vert();
+		inline void scroll_horiz();
 
 		int scanline;
 		int dot;
 
-		uint8_t attr_shift_a, attr_shift_b;
-		uint16_t bm_shift_a, bm_shift_b;
-		bool attr_latch_a, attr_latch_b;
+		uint8_t attr_shift_low, attr_shift_high;
+		uint16_t bm_shift_low, bm_shift_high;
+		bool attr_latch_low, attr_latch_high;
+		uint8_t nametable_latch, attrtable_latch, bm_low, bm_high;
 
 		union VRAM_Addr {
 				struct {
@@ -100,6 +109,7 @@ private:
 		uint8_t internal_read_buffer;
 
 		int mirroring_mode;
+		bool odd_frame;
 
 private:
 		uint8_t mem_read(uint16_t addr) { return mem_access(addr, 0, false); }
@@ -108,8 +118,11 @@ private:
 
 		void oam_clear();
 		uint8_t oam_get(uint8_t *oam, uint8_t idx, OAM_SPRITE p);
+		void oam_copy();
+		void evaluate_sprites();
 
 		void scanline_cycle(SCANLINE_TYPE t);
+		void draw();
 
 public:
 		const int PPUCTRL = 0;
