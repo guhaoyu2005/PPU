@@ -3,6 +3,7 @@
 */
 
 #include <stdint.h>
+#include "ui.hpp"
 
 #define PPU_MIRRORING_NONE 0
 #define PPU_MIRRORING_HORIZONTAL 1
@@ -24,6 +25,7 @@ public:
 		void cycle();
 		void set_mirroring_mode(int m) { mirroring_mode = m; }
 		void reset();
+		void render_current() { render_screen(output); }
 
 public:
 		uint8_t read_ppu_ext_register(int reg) {
