@@ -30,18 +30,36 @@ void init_sdl() {
 		}
 }
 
-void render_screen(int *output) {
+void render_screen(int *output, bool &quit) {
 		if (win == nullptr)
 				init_sdl();
 
 		SDL_RenderClear(render);
-		for (int i=0;i<240;i++) {
-				for (int j=0;j<256;j++) {
-						SDL_SetRenderDrawColor(render, (output[i*256+j] >> 16) & 0xff, (output[i*256+j] >> 8) & 0xff, output[i*256+j] & 0xff, 0xff);
-						//SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-						SDL_RenderDrawPoint(render, j, i);
+		//while (true) {
+			SDL_Event event;
+			while (SDL_PollEvent(&event)) {
+				/* handle your event here */
+				if (event.type == SDL_QUIT) {
+					quit = true;
+					break;
 				}
-		}	
-		SDL_RenderPresent(render);
+
+				break;
+			}
+		/*	if (quit) {
+				break;
+			}*/
+			/* do some other stuff here -- draw your app, etc. */
+			for (int i=0;i<240;i++) {
+				for (int j=0;j<256;j++) {
+					SDL_SetRenderDrawColor(render, (output[i*256+j] >> 16) & 0xff, (output[i*256+j] >> 8) & 0xff, output[i*256+j] & 0xff, 0xff);
+					//SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
+					SDL_RenderDrawPoint(render, j, i);
+				}
+			}	
+			SDL_RenderPresent(render);
+			SDL_Delay(1000/60);
+			
+		
 		//SDL_Delay(50);
 }

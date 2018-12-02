@@ -25,7 +25,7 @@ public:
 		void cycle();
 		void set_mirroring_mode(int m) { mirroring_mode = m; }
 		void reset();
-		void render_current() { render_screen(output); }
+		void render_current(bool &quit) { render_screen(output, quit); }
 
 public:
 		uint8_t read_ppu_ext_register(int reg) {
